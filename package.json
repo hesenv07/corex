@@ -1,9 +1,10 @@
 {
   "name": "servios",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "servios is a lightweight foundational library that provides essential building blocks for modern applications, including core utilities, API abstractions, integration providers, caching mechanisms, and shared logic.It is designed to centralize common functionality and promote clean, maintainable, and reusable code across multiple projects.",
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
@@ -31,7 +32,7 @@
     "toolkit",
     "utilities"
   ],
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -73,7 +74,7 @@
       "optional": false
     },
     "react-router-dom": {
-      "optional": false
+      "optional": true
     },
     "@tanstack/react-query": {
       "optional": true
