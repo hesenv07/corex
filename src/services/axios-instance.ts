@@ -1,35 +1,38 @@
+import type {
+  AxiosError,
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import axios, { AxiosHeaders } from 'axios';
 
-import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-
 import { getToken, setToken } from './token';
-
 import type { ApiServiceConfig, RefreshTokenResponse } from './types';
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  isPublic?: boolean;
 }
 
-const refreshToken = async (
+const refreshTokenRequest = async (
   baseUrl: string,
-  refreshEndpoint: string,
-  withCredentials: boolean = true,
-  onRefreshTokenFail?: () => void,
+  endpoint: string,
+  withCredentials: boolean,
+  onFail?: () => void,
 ): Promise<string | null> => {
   try {
     const response = await axios.post<RefreshTokenResponse>(
-      `${baseUrl}${refreshEndpoint}`,
+      `${baseUrl}${endpoint}`,
       {},
       { withCredentials },
     );
-    setToken(response.data.accessToken);
-    return response.data.accessToken;
-  } catch (error) {
-    if (onRefreshTokenFail) {
-      onRefreshTokenFail();
-    } else {
-      window.location.href = '/login';
-    }
+
+    const newToken = response.data.accessToken;
+    setToken(newToken);
+
+    return newToken;
+  } catch {
+    onFail?.();
     return null;
   }
 };
@@ -39,61 +42,69 @@ export const createAxiosInstance = (config: ApiServiceConfig): AxiosInstance => 
     baseUrl,
     headers = {},
     withCredentials = true,
-    refreshTokenWithCredentials = true,
-    timeout = 30000,
     refreshTokenEndpoint = '/refresh',
+    refreshTokenWithCredentials = true,
     onRefreshTokenFail,
+    timeout = 30000,
   } = config;
 
   const api: AxiosInstance = axios.create({
     baseURL: baseUrl,
-    withCredentials,
     timeout,
+    withCredentials,
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
   });
 
+  /** -----------------------------
+   * REQUEST INTERCEPTOR
+   * ----------------------------*/
   api.interceptors.request.use(
-    (requestConfig: CustomAxiosRequestConfig): CustomAxiosRequestConfig => {
-      const token = getToken(config.tokenConfig);
+    (req: CustomAxiosRequestConfig) => {
+      if (req.isPublic) return req;
 
+      const token = getToken(config.tokenConfig);
       if (token) {
-        requestConfig.headers = new AxiosHeaders({
-          ...requestConfig.headers,
+        req.headers = new AxiosHeaders({
+          ...req.headers,
           Authorization: `Bearer ${token}`,
         });
       }
 
-      return requestConfig;
+      return req;
     },
-    (error: AxiosError) => Promise.reject(error),
+    (error) => Promise.reject(error),
   );
 
+  /** -----------------------------
+   * RESPONSE INTERCEPTOR
+   * ----------------------------*/
   api.interceptors.response.use(
-    (response: AxiosResponse) => response,
+    (res: AxiosResponse) => res,
     async (error: AxiosError) => {
-      const originalRequest = error.config as CustomAxiosRequestConfig;
+      const req = error.config as CustomAxiosRequestConfig;
+      if (!req || req.isPublic) return Promise.reject(error);
 
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
+      if (error.response?.status === 401 && !req._retry) {
+        req._retry = true;
 
-        const newToken = await refreshToken(
+        const newToken = await refreshTokenRequest(
           baseUrl,
           refreshTokenEndpoint,
           refreshTokenWithCredentials,
           onRefreshTokenFail,
         );
 
-        if (newToken) {
-          originalRequest.headers = new AxiosHeaders({
-            ...originalRequest.headers,
-            Authorization: `Bearer ${newToken}`,
-          });
+        if (!newToken) return Promise.reject(error);
 
-          return api(originalRequest);
-        }
+        req.headers = new AxiosHeaders({
+          ...req.headers,
+          Authorization: `Bearer ${newToken}`,
+        });
+
+        return api(req);
       }
 
       return Promise.reject(error);

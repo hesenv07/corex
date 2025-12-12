@@ -1,0 +1,12 @@
+📌 How to create public or private services
+Public (no token, no refresh)
+
+export const PublicAuthService = createService({
+  isPublic: true,
+  serviceName: 'auth',
+});
+
+Private (default)
+export const UserService = createService({
+  serviceName: 'user',
+});
