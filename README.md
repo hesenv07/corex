@@ -15,6 +15,7 @@ Servios is a lightweight library providing essential building blocks for modern 
 - 🎭 **Mock support** - Built-in mock adapter for dev/testing
 - 🌐 **Smart URLs** - `{baseURL}/{serviceName}/{version}/{endpoint}`
 - 🔐 **Flexible token storage** - Cookie, localStorage, or sessionStorage
+- 🔓 **Public API support** - Per-request or service-level unauthenticated calls
 - ⚡ **TypeScript first** - Full type safety and excellent IDE support
 
 ---
@@ -110,6 +111,7 @@ configureBaseService({
   // Optional - Service
   serviceName?: string;              // Default: 'api'
   version?: string;                  // Default: 'v1'
+  isPublic?: boolean;                // Default: false - Skip auth for all requests
 
   // Optional - Token handlers
   getAccessToken?: () => string | null;
@@ -200,6 +202,7 @@ class UserService extends ApiService {
   params?: Record<string, any>;      // Query params
   data?: any;                        // Request body
   version?: string;                  // Override version
+  isPublic?: boolean;                // Skip authentication for this request
   isMock?: boolean;                  // Mock this request
   mockData?: T;                      // Mock response
   mockStatus?: number;               // Mock status code
@@ -253,6 +256,58 @@ const refresh = getRefreshToken();
 ---
 
 ## 🛠️ Advanced Features
+
+### Public API Requests
+
+You can make unauthenticated (public) requests in two ways:
+
+#### Per-Request Level
+
+```typescript
+class OrgService extends ApiService {
+  constructor() {
+    super({ serviceName: 'org' });
+  }
+
+  // Public endpoint - no token sent
+  getPublicOrgs() {
+    return this.get({
+      endpoint: 'list',
+      isPublic: true
+    });
+  }
+
+  // Authenticated endpoint - token sent
+  updateOrg(data: any) {
+    return this.put({
+      endpoint: 'update',
+      data
+    });
+  }
+}
+```
+
+#### Service Level
+
+```typescript
+// All requests in this service are public
+class PublicApiService extends ApiService {
+  constructor() {
+    super({
+      serviceName: 'public',
+      isPublic: true  // No authentication for any request
+    });
+  }
+
+  getNews() {
+    return this.get({ endpoint: 'news' });
+  }
+
+  getArticle(id: string) {
+    return this.get({ endpoint: `articles/${id}` });
+  }
+}
+```
 
 ### Custom Error Transform
 

@@ -20,6 +20,7 @@ import type { HttpMethod, RequestConfig, BaseServiceOptions, ServiceOverrides } 
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
+  isPublic?: boolean;
 }
 
 export class BaseService {
@@ -31,6 +32,7 @@ export class BaseService {
     version: string;
     useMock: boolean;
     mockDelay: number;
+    isPublic: boolean;
     serviceName: string;
     retryOnStatusCodes: number[];
     logout: () => void;
@@ -58,6 +60,7 @@ export class BaseService {
       version: 'v1',
       useMock: false,
       mockDelay: 1000,
+      isPublic: false,
       retryOnStatusCodes: [401],
       transformError: (err) => err.response?.data ?? { message: err.message || 'Network error' },
 
@@ -80,7 +83,10 @@ export class BaseService {
     this.api = axios.create({ baseURL: this.options.baseURL });
 
     if (this.options.useMock) this.enableMocking();
-    this.setupInterceptors();
+
+    if (!this.options.isPublic) {
+      this.setupInterceptors();
+    }
   }
 
   private enableMocking() {
@@ -92,8 +98,14 @@ export class BaseService {
 
   private setupInterceptors() {
     this.api.interceptors.request.use((config) => {
+      if ((config as CustomAxiosRequestConfig).isPublic) {
+        return config;
+      }
+
       const token = this.options.getAccessToken!();
-      if (token) config.headers.Authorization = `Bearer ${token}`;
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
       return config;
     });
 
@@ -175,6 +187,7 @@ export class BaseService {
       mockData,
       mockStatus = 200,
       includeHeaders = false,
+      isPublic = false,
       config: axiosConfig = {},
     } = config;
 
@@ -184,11 +197,17 @@ export class BaseService {
       this.registerMock(method, url, mockData, mockStatus);
     }
 
+    const requestConfig: CustomAxiosRequestConfig = {
+      params,
+      ...axiosConfig,
+      isPublic,
+    };
+
     try {
       const response: AxiosResponse<T> =
         method === 'get' || method === 'delete'
-          ? await this.api[method](url, { params, ...axiosConfig })
-          : await this.api[method](url, data ?? {}, { params, ...axiosConfig });
+          ? await this.api[method](url, requestConfig)
+          : await this.api[method](url, data ?? {}, requestConfig);
 
       return includeHeaders
         ? ({ ...response.data, headers: response.headers } as T)
