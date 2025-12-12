@@ -77,7 +77,6 @@ const setTokenInStorage = (
       CookieManager.set(tokenKey, token, {
         ...DEFAULT_COOKIE_OPTIONS,
         ...cookieOptions,
-        domain: '',
       });
       break;
   }
@@ -114,7 +113,6 @@ const removeTokenFromStorage = (
     default:
       CookieManager.remove(tokenKey, {
         path: cookieOptions?.path || '/',
-        domain: '',
       });
       break;
   }

@@ -1,6 +1,6 @@
 {
   "name": "servios",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "servios is a lightweight foundational library that provides essential building blocks for modern applications, including core utilities, API abstractions, integration providers, caching mechanisms, and shared logic.It is designed to centralize common functionality and promote clean, maintainable, and reusable code across multiple projects.",
   "license": "MIT",
   "type": "module",
@@ -104,6 +104,6 @@
   "dependencies": {
     "axios": "^1.7.2",
     "axios-mock-adapter": "^2.1.0",
-    "everyday-helper": "^1.2.3"
+    "everyday-helper": "^1.2.4"
   }
 }
