@@ -43,6 +43,7 @@ export const createAxiosInstance = (config: ApiServiceConfig): AxiosInstance => 
     timeout = 30000,
     refreshTokenEndpoint = '/refresh',
     onRefreshTokenFail,
+    isPublic = true
   } = config;
 
   const api: AxiosInstance = axios.create({
@@ -57,6 +58,9 @@ export const createAxiosInstance = (config: ApiServiceConfig): AxiosInstance => 
 
   api.interceptors.request.use(
     (requestConfig: CustomAxiosRequestConfig): CustomAxiosRequestConfig => {
+
+      if (isPublic) return requestConfig;
+
       const token = getToken(config.tokenConfig);
 
       if (token) {
@@ -75,6 +79,10 @@ export const createAxiosInstance = (config: ApiServiceConfig): AxiosInstance => 
     (response: AxiosResponse) => response,
     async (error: AxiosError) => {
       const originalRequest = error.config as CustomAxiosRequestConfig;
+
+      if (isPublic) {
+        return Promise.reject(error);
+      }
 
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;

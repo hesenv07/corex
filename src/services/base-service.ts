@@ -1,22 +1,22 @@
 import axios, {
   type AxiosError,
   type AxiosInstance,
-  type AxiosResponse,
   type AxiosRequestConfig,
+  type AxiosResponse,
 } from 'axios';
 
 import MockAdapter from 'axios-mock-adapter';
 
 import {
-  getToken,
-  setToken,
-  removeToken,
   getRefreshToken,
-  setRefreshToken,
+  getToken,
   removeRefreshToken,
+  removeToken,
+  setRefreshToken,
+  setToken,
 } from './token';
 
-import type { HttpMethod, RequestConfig, BaseServiceOptions, ServiceOverrides } from './types';
+import type { BaseServiceOptions, HttpMethod, RequestConfig, ServiceOverrides } from './types';
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
@@ -43,6 +43,7 @@ export class BaseService {
     transformError: (error: AxiosError<any>) => any;
     tokenConfig?: BaseServiceOptions['tokenConfig'];
     refreshToken?: () => Promise<{ accessToken: string; refreshToken?: string }>;
+    isPublic?: boolean
   };
 
   private isRefreshing = false;
@@ -60,7 +61,7 @@ export class BaseService {
       mockDelay: 1000,
       retryOnStatusCodes: [401],
       transformError: (err) => err.response?.data ?? { message: err.message || 'Network error' },
-
+      isPublic: true,
       getAccessToken: () => getToken(options.tokenConfig),
       removeAccessToken: () => removeToken(options.tokenConfig),
       getRefreshToken: () => getRefreshToken(options.tokenConfig),
@@ -92,8 +93,10 @@ export class BaseService {
 
   private setupInterceptors() {
     this.api.interceptors.request.use((config) => {
-      const token = this.options.getAccessToken!();
-      if (token) config.headers.Authorization = `Bearer ${token}`;
+      if (!this.options.isPublic) {
+        const token = this.options.getAccessToken!();
+        if (token) config.headers.Authorization = `Bearer ${token}`;
+      }
       return config;
     });
 
@@ -101,7 +104,7 @@ export class BaseService {
       (res) => res,
       async (error: AxiosError) => {
         const config = error.config as CustomAxiosRequestConfig;
-        if (!config) return Promise.reject(error);
+        if (!config || this.options.isPublic) return Promise.reject(error);
 
         const shouldRetry =
           error.response?.status &&
@@ -142,7 +145,9 @@ export class BaseService {
       if (error) reject(error);
       else {
         config.headers = config.headers || {};
-        config.headers.Authorization = `Bearer ${token}`;
+        if(!this.options.isPublic){
+          config.headers.Authorization = `Bearer ${token}`;
+        }
         resolve(this.api(config));
       }
     });
@@ -229,11 +234,12 @@ type OverrideKeys =
   | 'useMock'
   | 'mockDelay'
   | 'transformError'
+  | 'isPublic'
   | 'retryOnStatusCodes';
 
 let sharedOptions:
   | (Pick<BaseServiceOptions, 'baseURL'> &
-      Partial<Omit<BaseServiceOptions, 'baseURL' | OverrideKeys>>)
+    Partial<Omit<BaseServiceOptions, 'baseURL' | OverrideKeys>>)
   | null = null;
 
 export const configureBaseService = (

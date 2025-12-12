@@ -39,6 +39,8 @@ export interface RequestConfig<T = any> {
 export interface BaseServiceOptions {
   baseURL: string;
 
+  isPublic?: boolean
+
   version?: string;
   serviceName?: string;
 
@@ -80,4 +82,5 @@ export interface ApiServiceConfig {
   onRefreshTokenFail?: () => void;
   headers?: Record<string, string>;
   refreshTokenWithCredentials?: boolean;
+  isPublic?: boolean
 }
