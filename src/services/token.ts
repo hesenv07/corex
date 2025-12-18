@@ -1,4 +1,4 @@
-import { CookieManager } from 'everyday-helper';
+import { CookieManager, isBrowser } from 'everyday-helper';
 
 import type { TokenConfig, SingleTokenConfig, TokenCookieOptions } from './types';
 
@@ -67,10 +67,14 @@ const setTokenInStorage = (
 ): void => {
   switch (storage) {
     case 'localStorage':
-      localStorage.setItem(tokenKey, token);
+      if (isBrowser()) {
+        localStorage.setItem(tokenKey, token);
+      }
       break;
     case 'sessionStorage':
-      sessionStorage.setItem(tokenKey, token);
+      if (isBrowser()) {
+        sessionStorage.setItem(tokenKey, token);
+      }
       break;
     case 'cookie':
     default:
@@ -88,9 +92,15 @@ const getTokenFromStorage = (
 ): string | null => {
   switch (storage) {
     case 'localStorage':
-      return localStorage.getItem(tokenKey) || null;
+      if (isBrowser()) {
+        return localStorage.getItem(tokenKey) || null;
+      }
+      return null;
     case 'sessionStorage':
-      return sessionStorage.getItem(tokenKey) || null;
+      if (isBrowser()) {
+        return sessionStorage.getItem(tokenKey) || null;
+      }
+      return null;
     case 'cookie':
     default:
       return CookieManager.get(tokenKey);
@@ -104,10 +114,14 @@ const removeTokenFromStorage = (
 ): void => {
   switch (storage) {
     case 'localStorage':
-      localStorage.removeItem(tokenKey);
+      if (isBrowser()) {
+        localStorage.removeItem(tokenKey);
+      }
       break;
     case 'sessionStorage':
-      sessionStorage.removeItem(tokenKey);
+      if (isBrowser()) {
+        sessionStorage.removeItem(tokenKey);
+      }
       break;
     case 'cookie':
     default:
