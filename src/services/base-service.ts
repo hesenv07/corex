@@ -17,6 +17,7 @@ import {
 } from './token';
 
 import type { HttpMethod, RequestConfig, BaseServiceOptions, ServiceOverrides } from './types';
+
 import {
   buildUrl,
   isCallingMethodPublic,
