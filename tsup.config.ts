@@ -8,7 +8,7 @@ export default defineConfig({
     // 'src/hooks/index.ts',
     // 'src/constants/index.ts',
   ],
-  format: ['esm', 'cjs'],
+  format: ['esm'],
   dts: {
     entry: 'src/index.ts',
     resolve: true,
@@ -21,7 +21,7 @@ export default defineConfig({
   },
   clean: true,
   // sourcemap: true,
-  minify: false, // keep readable for internal use
+  minify: true, // keep readable for internal use
   outDir: 'dist',
   splitting: false,
   keepNames: true,

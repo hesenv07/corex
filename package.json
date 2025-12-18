@@ -50,7 +50,8 @@
   },
   "scripts": {
     "build": "tsup && npm run copy-dist",
-    "copy-dist": "cp dist/index.js index.js && cp dist/index.d.ts index.d.ts && cp -r dist/styles styles",
+    "copy-dist": "cp dist/index.js index.js && cp dist/index.d.ts index.d.ts",
+    "locale-build": "tsup",
     "lint": "eslint .",
     "dev": "tsup --watch",
     "test": "vitest",
