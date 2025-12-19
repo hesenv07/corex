@@ -34,7 +34,11 @@ yarn add servios
 
 ## 🚀 Quick Start
 
-### Step 1: Configure Once (Global Setup)
+### Step 1: Configure Once (Global Setup) (React)
+
+**For Next.js you do not need this**
+
+***go to step 2b***
 
 Create a config file and set up Servios **once** for your entire app:
 
@@ -65,7 +69,7 @@ That's it! Now all services share this configuration.
 
 ---
 
-### Step 2: Create Services
+### Step 2a: Create Services (React Setup)
 
 Extend `ApiService` to create your API services. Each service automatically inherits the global configuration.
 
@@ -94,6 +98,52 @@ class UserService extends ApiService {
 }
 
 export default new UserService();
+```
+
+---
+
+### Step 2b: Create Services (Next.js Setup)
+
+Extend `BaseService` to create your API services. Each service automatically inherits the global configuration.
+
+```typescript
+// src/services/api.ts
+import { BaseService } from "servios";
+
+export class JsonService extends BaseService {
+    constructor() {
+        super({
+            baseURL: "https://jsonplaceholder.typicode.com/",
+            isPublic: true,
+            getAccessToken: () => "",
+            setAccessToken: () => "",
+            getRefreshToken: () => "",
+            setRefreshToken: () => "",
+        });
+    }
+}
+
+// src/services/Posts.ts
+import { JsonService } from './api';
+
+export class PostService extends JsonService {
+    getPost() {
+        return this.api.get("/posts")
+    }
+}
+
+// page.tsx
+import { PostService } from "./services/userService";
+
+const postService = new PostService();
+
+async function Home() {
+  const data = await postService.getPost();
+  return <p>{data?.data?.[0]?.title}</p>;
+}
+
+export default Home;
+
 ```
 
 ---
